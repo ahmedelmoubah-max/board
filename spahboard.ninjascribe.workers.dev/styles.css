@@ -1,0 +1,1660 @@
+/* 
+  Smart Interactive Whiteboard Design System
+  Dark / Light Mode â€¢ Fully Responsive â€¢ Mobile-First
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* =============================================
+   CSS VARIABLES â€” DARK MODE (DEFAULT)
+============================================= */
+:root {
+  --bg-color: #0b0f19;
+  --panel-bg: rgba(15, 23, 42, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --panel-glow: rgba(0, 162, 255, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: #cbd5e1;
+  --accent-primary: #00a2ff;
+  --accent-hover: #33b5ff;
+  --accent-glow: rgba(0, 162, 255, 0.4);
+  --danger: #ff4d4d;
+  --danger-hover: #ff6666;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --font-family: 'Outfit', sans-serif;
+  --board-white: #ffffff;
+  --board-black: #121212;
+  --board-grid-line: rgba(0, 162, 255, 0.1);
+  --board-ruled-line: rgba(0, 162, 255, 0.15);
+  --border-radius-lg: 20px;
+  --border-radius-md: 12px;
+  --border-radius-sm: 8px;
+  --shadow-main: 0 12px 40px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.2);
+  --glass-blur: blur(16px);
+  --toolbar-btn-size: 44px;
+  --sidebar-width: 280px;
+}
+
+/* =============================================
+   LIGHT MODE OVERRIDES
+============================================= */
+body.light-mode {
+  --bg-color: #f0f4f8;
+  --panel-bg: rgba(255, 255, 255, 0.92);
+  --panel-border: rgba(0, 0, 0, 0.1);
+  --panel-glow: rgba(0, 130, 200, 0.1);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --accent-primary: #0080cc;
+  --accent-hover: #0099ee;
+  --accent-glow: rgba(0, 128, 204, 0.3);
+  --danger: #dc2626;
+  --danger-hover: #ef4444;
+  --success: #059669;
+  --warning: #d97706;
+  --board-grid-line: rgba(0, 130, 200, 0.12);
+  --board-ruled-line: rgba(0, 130, 200, 0.18);
+  --shadow-main: 0 12px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+}
+
+body.light-mode .board-background {
+  background-color: #ffffff;
+}
+
+/* =============================================
+   BASE RESET
+============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* Prevent iOS bounce/rubber-band scroll */
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-color);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Prevent pull-to-refresh and overscroll */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: auto;
+}
+
+/* =============================================
+   CANVAS LAYOUT
+============================================= */
+#canvas-container {
+  /* position: fixed ensures it stays locked even when mobile address bar appears/hides */
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  touch-action: none;
+  /* Prevent iOS overscroll bounce within container */
+  overscroll-behavior: none;
+}
+
+#whiteboard-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+  z-index: 2; /* Explicitly place canvas on top of background */
+}
+
+.board-background {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Explicitly place background above body, below canvas */
+  transition: background-color 0.3s ease;
+}
+
+/* =============================================
+   GLASSMORPHISM PANEL
+============================================= */
+.glass-panel {
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-main);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  z-index: 10;
+}
+
+.glass-panel:hover {
+  border-color: rgba(255,255,255,0.18);
+  box-shadow: 0 8px 32px rgba(0,162,255,0.08), var(--shadow-main);
+}
+
+/* =============================================
+   TOP INFO BAR
+============================================= */
+.info-overlay {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 15;
+  white-space: nowrap;
+  font-size: 12px;
+  flex-wrap: nowrap;
+  max-width: 96vw;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.info-overlay::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide helper class for responsive layout */
+.hide-mobile {
+  display: inline;
+}
+
+@media (max-width: 992px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+.info-badge {
+  background: rgba(0, 162, 255, 0.2);
+  color: var(--accent-primary);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.info-action-btn {
+  background: var(--accent-primary);
+  border: none;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 15px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.2s ease, transform 0.1s ease;
+  user-select: none;
+  font-family: var(--font-family);
+}
+
+.info-action-btn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.05);
+}
+
+.info-action-btn:active { transform: scale(0.95); }
+
+.info-action-btn.warning-hover:hover { background: var(--warning); }
+.info-action-btn.danger-hover:hover  { background: var(--danger);  }
+
+/* =============================================
+   DARK / LIGHT MODE TOGGLE
+============================================= */
+#theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 30px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--shadow-main);
+  transition: all 0.3s ease;
+  min-width: 84px;
+  justify-content: space-between;
+  font-family: var(--font-family);
+}
+
+#theme-toggle:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px var(--accent-glow), var(--shadow-main);
+}
+
+.theme-icon {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 0.4s ease;
+}
+
+.theme-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.theme-slider {
+  width: 26px;
+  height: 14px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 7px;
+  position: relative;
+  transition: background 0.3s ease;
+}
+
+.theme-slider::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+body.light-mode .theme-slider::after {
+  transform: translateX(12px);
+  background: var(--warning);
+}
+
+/* =============================================
+   FLOATING BOTTOM TOOLBAR
+============================================= */
+.floating-toolbar {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  max-width: 96vw;
+  flex-wrap: wrap;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* =============================================
+   TOOLBAR BUTTONS â€” COLORFUL ICONS
+============================================= */
+.tool-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: var(--text-secondary);
+  width: var(--toolbar-btn-size);
+  height: var(--toolbar-btn-size);
+  border-radius: var(--border-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+body.light-mode .tool-btn {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.08);
+  color: var(--text-secondary);
+}
+
+.tool-btn svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.2s ease;
+}
+
+.tool-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+body.light-mode .tool-btn:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+.tool-btn:hover svg { transform: scale(1.1); }
+
+.tool-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: 0 0 16px var(--accent-glow);
+  border-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Color-coded tool buttons */
+#tool-select  { --tool-color: #00a2ff; }
+#tool-hand    { --tool-color: #f59e0b; }
+#tool-pen     { --tool-color: #3b82f6; }
+#tool-highlighter { --tool-color: #fbbf24; }
+#tool-eraser  { --tool-color: #f87171; }
+#tool-line    { --tool-color: #a78bfa; }
+#tool-arrow-btn { --tool-color: #34d399; }
+#tool-shapes-btn { --tool-color: #60a5fa; }
+#tool-text    { --tool-color: #fb923c; }
+#tool-sticky  { --tool-color: #fde047; }
+#tool-laser   { --tool-color: #ff4d4d; }
+#tool-spotlight { --tool-color: #fbbf24; }
+#tool-magnifier { --tool-color: #34d399; }
+#tool-magic-pen { --tool-color: #c084fc; }
+#tool-curtain  { --tool-color: #94a3b8; }
+#tool-timer    { --tool-color: #f97316; }
+#tool-math-ruler { --tool-color: #2dd4bf; }
+#tool-math-protractor { --tool-color: #818cf8; }
+#tool-dice    { --tool-color: #e879f9; }
+
+.tool-btn:not(.active):hover {
+  color: var(--tool-color, var(--text-primary));
+  border-color: var(--tool-color, transparent);
+  background: color-mix(in srgb, var(--tool-color, white) 12%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--tool-color, transparent) 30%, transparent);
+}
+
+.tool-separator {
+  width: 1px;
+  height: 28px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+body.light-mode .tool-separator {
+  background: rgba(0,0,0,0.12);
+}
+
+/* Tooltip */
+.tool-btn[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  background: rgba(11,15,25,0.95);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  z-index: 100;
+}
+
+.tool-btn[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* =============================================
+   SIDE PANELS
+============================================= */
+.side-panel-left {
+  position: absolute;
+  top: 70px;
+  left: 16px;
+  width: var(--sidebar-width);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 12;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.side-panel-left.collapsed {
+  transform: translateX(-120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.side-panel-right {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  width: var(--sidebar-width);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 12;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.side-panel-right.collapsed {
+  transform: translateX(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* =============================================
+   TYPOGRAPHY
+============================================= */
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  letter-spacing: 0.4px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding-bottom: 5px;
+}
+
+body.light-mode h3 { border-bottom-color: rgba(0,0,0,0.08); }
+
+label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* =============================================
+   ACTION BUTTONS
+============================================= */
+.action-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: var(--text-primary);
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  font-family: var(--font-family);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.action-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.14);
+}
+
+body.light-mode .action-btn {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.08);
+}
+
+body.light-mode .action-btn:hover {
+  background: rgba(0,0,0,0.08);
+}
+
+/* =============================================
+   COLOR PALETTE
+============================================= */
+.properties-grid { display: flex; flex-direction: column; gap: 10px; }
+
+.color-palette {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.color-swatch {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.3);
+}
+
+body.light-mode .color-swatch {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.color-swatch:hover {
+  transform: scale(1.2);
+  border-color: #ffffff;
+}
+
+body.light-mode .color-swatch:hover {
+  border-color: #121212;
+}
+
+.color-swatch.active {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--accent-primary), 0 2px 4px rgba(0, 0, 0, 0.4);
+  transform: scale(1.1);
+}
+
+body.light-mode .color-swatch.active {
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 2px var(--text-primary), 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+/* =============================================
+   BG / LINE BUTTONS
+============================================= */
+.bg-grid {
+  display: grid;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.bg-btn ,.line-btn {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-primary);
+  padding: 6px 4px;
+  border-radius: var(--border-radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all 0.2s ease;
+}
+
+.bg-btn:hover, .line-btn:hover { background: rgba(255,255,255,0.1); }
+
+.bg-btn.active, .line-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-hover);
+  color: white;
+}
+
+body.light-mode .bg-btn,
+body.light-mode .line-btn {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.1);
+  color: var(--text-primary);
+}
+
+/* Fix: light-mode higher specificity override active state */
+body.light-mode .bg-btn.active,
+body.light-mode .line-btn.active {
+  background: var(--accent-primary) !important;
+  border-color: var(--accent-hover) !important;
+  color: white !important;
+}
+
+body.light-mode .bg-btn:hover,
+body.light-mode .line-btn:hover { background: rgba(0,0,0,0.08); }
+
+body.light-mode .bg-btn.active:hover,
+body.light-mode .line-btn.active:hover { background: var(--accent-hover) !important; }
+
+/* =============================================
+   FILE INPUT WRAPPER
+============================================= */
+.file-input-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.file-input-wrapper input[type="file"] {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: auto !important;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.file-input-wrapper .action-btn {
+  pointer-events: none;
+  position: relative;
+  z-index: 1;
+}
+
+/* =============================================
+   COLOR / CUSTOM INPUT
+============================================= */
+input[type="color"] {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+input[type="range"] {
+  accent-color: var(--accent-primary);
+  width: 100%;
+}
+
+/* =============================================
+   LAYERS LIST
+============================================= */
+.layers-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.layer-item, .list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-radius: var(--border-radius-sm);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+}
+
+.layer-item:hover, .list-item:hover { background: rgba(255,255,255,0.08); }
+
+.layer-item.selected, .list-item.selected {
+  background: rgba(0,162,255,0.15);
+  border-color: rgba(0,162,255,0.35);
+}
+
+.list-item-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  padding: 3px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+}
+
+.list-item-btn:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+body.light-mode .list-item-btn {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.1);
+}
+
+/* =============================================
+   DROPDOWN MENUS
+============================================= */
+.arrow-dropdown-menu,
+.shapes-dropdown-menu,
+.pen-dropdown-menu {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-main);
+  z-index: 50;
+  padding: 6px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.arrow-dropdown-menu.show,
+.pen-dropdown-menu.show {
+  display: flex;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover { background: rgba(255,255,255,0.1); }
+body.light-mode .dropdown-item:hover { background: rgba(0,0,0,0.05); }
+.dropdown-item.active {
+  background: rgba(0,162,255,0.2);
+  color: var(--accent-primary);
+}
+
+/* Shapes grid */
+.shapes-dropdown-wrapper, .arrow-dropdown-wrapper, .pen-dropdown-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shapes-dropdown-menu {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 8px;
+}
+
+.shapes-dropdown-menu.show {
+  display: grid;
+}
+
+.shapes-grid-item {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius-sm);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+body.light-mode .shapes-grid-item {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.08);
+}
+
+.shapes-grid-item svg { width: 20px; height: 20px; }
+
+.shapes-grid-item:hover {
+  background: rgba(0,162,255,0.15);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.shapes-grid-item.active {
+  background: rgba(0,162,255,0.25);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* =============================================
+   CUSTOM SCROLLBAR
+============================================= */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+body.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+
+/* =============================================
+   DRAGGABLE TOOL OVERLAYS
+============================================= */
+.draggable-tool-overlay {
+  position: absolute;
+  z-index: 20;
+  cursor: move;
+  border: 1px solid rgba(0,162,255,0.3);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+
+.math-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 21;
+}
+
+/* =============================================
+   TOAST NOTIFICATION
+============================================= */
+.toast-msg {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  padding: 10px 20px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  background: rgba(16,185,129,0.9);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 9999;
+  box-shadow: var(--shadow-main);
+  backdrop-filter: blur(5px);
+  white-space: nowrap;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast-msg.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast-msg.error { background: rgba(255,77,77,0.9); }
+
+/* =============================================
+   MODAL OVERLAY
+============================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-content {
+  width: 90%;
+  max-width: 600px;
+  padding: 24px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--border-radius-lg);
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: rgba(255,255,255,0.07);
+  border: none;
+  color: var(--text-secondary);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.modal-close:hover { background: var(--danger); color: white; }
+
+.shortcut-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  font-size: 12px;
+}
+
+.shortcut-key {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+
+body.light-mode .shortcut-key {
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.12);
+}
+
+/* =============================================
+   TIMER / DICE OVERLAYS
+============================================= */
+.timer-digits {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  direction: ltr !important;
+}
+
+.timer-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.timer-input {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  border-radius: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  text-align: center;
+  width: 44px;
+  font-family: var(--font-family);
+}
+
+.timer-digit-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 10px;
+  padding: 2px 6px;
+  transition: color 0.2s;
+}
+
+.timer-digit-btn:hover { color: var(--accent-primary); }
+
+.timer-controls { display: flex; gap: 6px; width: 100%; }
+
+.timer-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-family);
+  transition: all 0.2s;
+  flex: 1;
+}
+
+.timer-btn:hover { background: rgba(255,255,255,0.12); }
+
+body.light-mode .timer-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+}
+
+body.light-mode .timer-btn:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .timer-input {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: var(--text-primary) !important;
+}
+
+body.light-mode .timer-digit-btn {
+  color: var(--text-secondary) !important;
+}
+
+.dice-face {
+  width: 80px;
+  height: 80px;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 6px;
+  gap: 2px;
+  place-items: center;
+  position: relative;
+  transition: transform 0.3s ease;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+body.light-mode .dice-face {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.dice-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-primary); /* Adapts to theme */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+body.light-mode .dice-dot {
+  background: #1e293b;
+}
+
+/* Rolling animation */
+.dice-rolling {
+  animation: diceRollAnim 0.3s infinite linear;
+}
+
+@keyframes diceRollAnim {
+  0% { transform: rotate(0deg) scale(0.95); }
+  50% { transform: rotate(180deg) scale(1.05); }
+  100% { transform: rotate(360deg) scale(0.95); }
+}
+
+/* =============================================
+   PDF CONTROLS
+============================================= */
+.pdf-navigation-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255,255,255,0.04);
+  padding: 6px;
+  border-radius: var(--border-radius-sm);
+  margin-top: 4px;
+}
+
+#floating-pdf-controls {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  z-index: 30;
+  border-radius: var(--border-radius-md);
+}
+
+#floating-pdf-controls .list-item-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+#floating-pdf-controls .list-item-btn.danger:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* =============================================
+   HEARTBEAT + ABOUT MODAL ANIMATIONS
+============================================= */
+@keyframes heartbeat {
+  0%   { transform: scale(1); }
+  14%  { transform: scale(1.2); }
+  28%  { transform: scale(1); }
+  42%  { transform: scale(1.13); }
+  70%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes aboutFadeIn {
+  from { opacity: 0; transform: translateY(-18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+#btn-heart-about:hover {
+  filter: brightness(1.3) drop-shadow(0 0 6px rgba(239,68,68,0.7));
+}
+
+/* =============================================
+   PANEL TOGGLE BUTTON (mobile only)
+============================================= */
+.panel-toggle-btn {
+  display: flex;
+  position: fixed;
+  z-index: 25;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  font-size: 16px;
+  box-shadow: var(--shadow-main);
+  color: var(--text-primary);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.panel-toggle-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px var(--accent-glow), var(--shadow-main);
+}
+
+.panel-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+#toggle-left-panel  { left: 16px; top: 16px; }
+#toggle-right-panel { right: 116px; top: 16px; }
+
+/* =============================================
+   RESPONSIVE â€” LARGE SCREENS (â‰¥1600px)
+============================================= */
+@media (min-width: 1600px) {
+  :root {
+    --toolbar-btn-size: 48px;
+    --sidebar-width: 300px;
+  }
+
+  .floating-toolbar { gap: 7px; padding: 10px 18px; }
+  .tool-btn svg { width: 24px; height: 24px; }
+  .info-action-btn { font-size: 12px; }
+}
+
+/* =============================================
+   RESPONSIVE â€” MEDIUM SCREENS (768â€“1199px)
+============================================= */
+@media (max-width: 1199px) {
+  :root {
+    --sidebar-width: 240px;
+    --toolbar-btn-size: 40px;
+  }
+
+  .side-panel-left  { left: 10px; top: 60px; padding: 12px; }
+  .side-panel-right { right: 10px; top: 60px; padding: 12px; }
+
+  .floating-toolbar { gap: 4px; padding: 6px 10px; bottom: 12px; }
+  .tool-btn svg { width: 20px; height: 20px; }
+}
+
+/* =============================================
+   RESPONSIVE â€” TABLET / SMALL (â‰¤768px)
+============================================= */
+/* =============================================
+   BOTTOM INFO BAR DEFAULT STYLES
+============================================= */
+#bottom-info-bar {
+  position: fixed;
+  bottom: 12px;
+  left: 16px;
+  transform: none;
+  z-index: 9999;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  direction: rtl;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  background: rgba(11, 15, 25, 0.72) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  padding: 5px 16px !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4) !important;
+  white-space: nowrap;
+}
+
+body.light-mode #bottom-info-bar {
+  background: rgba(240, 244, 248, 0.88) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: rgba(15, 23, 42, 0.9) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12) !important;
+}
+
+#bottom-info-bar span {
+  pointer-events: auto;
+}
+
+/* On mobile, shrink font and lift above toolbar */
+@media (max-width: 768px) {
+  #bottom-info-bar {
+    bottom: 120px;
+    font-size: 10px;
+    gap: 10px;
+    padding: 4px 12px !important;
+  }
+}
+
+/* =============================================
+   RESPONSIVE â€” TABLET / SMALL (â‰¤992px)
+============================================= */
+@media (max-width: 992px) {
+  :root {
+    --toolbar-btn-size: 38px;
+    --sidebar-width: 100%;
+  }
+
+  /* Stack left sidebar to float cleanly above raised mobile toolbar */
+  .side-panel-left {
+    top: 105px;
+    bottom: 90px;
+    left: 8px;
+    width: 200px;
+    max-height: calc(100vh - 205px);
+    font-size: 12px;
+    display: flex;
+    transform: translateX(-120%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .side-panel-left:not(.collapsed) {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .side-panel-right {
+    top: 105px;
+    bottom: 90px;
+    right: 8px;
+    width: 200px;
+    max-height: calc(100vh - 205px);
+    font-size: 12px;
+    display: flex;
+    transform: translateX(120%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  
+  .side-panel-right:not(.collapsed) {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Reposition toggle buttons on mobile/tablet to avoid overlapping */
+  #toggle-left-panel  { left: 8px; top: 8px; }
+  #toggle-right-panel { right: 86px; top: 8px; }
+
+  /* Toolbar wraps to multiple rows and is raised to make room for bottom info bar */
+  .floating-toolbar {
+    bottom: 32px;
+    left: 4px;
+    right: 4px;
+    transform: none;
+    width: calc(100vw - 8px);
+    max-width: 100vw;
+    gap: 4px;
+    padding: 7px 8px;
+    border-radius: 16px;
+  }
+
+  /* Tool tooltip direction fix on mobile */
+  .tool-btn[data-tooltip]::after { display: none; }
+
+  /* Top bar capsule is placed on the second row (below top toggles) to prevent any overlaps */
+  .info-overlay {
+    top: 56px;
+    left: 50%;
+    transform: translateX(-50%);
+    gap: 3px !important;
+    padding: 3px 6px !important;
+    font-size: 10px !important;
+    justify-content: center !important;
+    max-width: calc(100vw - 10px) !important;
+    width: max-content !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+  }
+
+  .info-badge { font-size: 9px; padding: 2px 4px; }
+  .info-action-btn {
+    font-size: 10px !important;
+    padding: 2px 5px !important;
+    gap: 2px !important;
+  }
+
+  /* Specific overrides for emoji buttons and icons on mobile to remain on a single line */
+  #btn-clap, #btn-celebrate, #btn-show-gif {
+    font-size: 11px !important;
+    padding: 2px 5px !important;
+  }
+
+  #btn-heart-about, #btn-supporters {
+    font-size: 15px !important;
+    padding: 0 2px !important;
+  }
+
+  .info-overlay div[style*="width: 1px"] {
+    margin: 0 2px !important;
+    height: 12px !important;
+  }
+
+  .info-action-btn svg {
+    width: 11px !important;
+    height: 11px !important;
+  }
+
+  /* Theme toggle repositioned next to right panel toggle */
+  #theme-toggle {
+    top: 8px;
+    right: 8px;
+    min-width: 70px;
+    padding: 4px 6px;
+  }
+
+  .theme-label { display: none; }
+
+  /* Floating PDF controls raised above mobile toolbar */
+  #floating-pdf-controls {
+    bottom: 155px;
+    right: 8px;
+  }
+
+  /* Bottom info bar plain text at the very bottom center of the screen */
+  #bottom-info-bar {
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
+/* =============================================
+   LANDSCAPE MOBILE (â‰¤900px height)
+============================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+  :root { --toolbar-btn-size: 34px; }
+
+  .floating-toolbar {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    bottom: 6px;
+    padding: 5px 8px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .floating-toolbar::-webkit-scrollbar { display: none; }
+
+  .side-panel-left,
+  .side-panel-right { display: none !important; }
+
+  .info-overlay {
+    top: 4px;
+    padding: 3px 6px !important;
+    font-size: 10px !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap !important;
+    gap: 3px !important;
+  }
+
+  #theme-toggle { top: 4px; right: 6px; }
+
+  .tool-separator {
+    width: 1px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  #floating-pdf-controls { bottom: 50px; }
+}
+
+/* Panel toggle buttons moved to top declarations */
+
+/* =============================================
+   CUSTOM BG PICKER CONTAINER
+============================================= */
+.custom-bg-picker-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  background: rgba(255,255,255,0.03);
+  padding: 6px;
+  border-radius: var(--border-radius-sm);
+}
+
+body.light-mode .custom-bg-picker-container {
+  background: rgba(0,0,0,0.03);
+}
+
+/* =============================================
+   TEXT EDITOR FOCUS PREVENT DIMMING
+   Explicitly override browser agent stylesheets to keep text fields transparent
+============================================= */
+.canvas-text-editor,
+.canvas-text-editor:focus {
+  position: absolute !important;
+  z-index: 1000 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  caret-color: var(--text-primary) !important;
+}
+
+body.light-mode .canvas-text-editor,
+body.light-mode .canvas-text-editor:focus {
+  color-scheme: only light !important;
+}
+
+body:not(.light-mode) .canvas-text-editor,
+body:not(.light-mode) .canvas-text-editor:focus {
+  color-scheme: only dark !important;
+}
+
+.canvas-sticky-editor,
+.canvas-sticky-editor:focus {
+  position: absolute !important;
+  z-index: 1000 !important;
+  background: var(--sticky-bg, #fef08a) !important;
+  border: 1px dashed var(--accent-primary) !important;
+  outline: none !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* =============================================
+   SHAPES & ARROWS BUTTON VERTICAL LAYOUT
+============================================= */
+.shapes-dropdown-wrapper .tool-btn,
+.arrow-dropdown-wrapper .tool-btn,
+.pen-dropdown-wrapper .tool-btn {
+  flex-direction: column !important;
+  padding: 4px 0 !important;
+  gap: 1px !important;
+}
+
+.shapes-dropdown-wrapper .tool-btn span,
+.arrow-dropdown-wrapper .tool-btn span,
+.pen-dropdown-wrapper .tool-btn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* =============================================
+   ABOUT MODAL THEME ADAPTATION
+============================================= */
+.about-modal-content {
+  background: var(--panel-bg) !important;
+  border: 1px solid var(--panel-border) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-main) !important;
+}
+
+.about-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.about-text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+.about-border-top {
+  border-top: 1px solid var(--panel-border) !important;
+}
+
+.about-close-btn {
+  background: var(--panel-border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.about-close-btn:hover {
+  background: var(--danger) !important;
+  color: white !important;
+}
+
+.about-highlight-yellow {
+  color: #fbbf24 !important;
+  transition: color 0.3s ease;
+}
+
+body.light-mode .about-highlight-yellow {
+  color: #b45309 !important; /* Darker amber for high contrast in light mode */
+}
+
+.about-highlight-green {
+  color: #34d399 !important;
+  transition: color 0.3s ease;
+}
+
+body.light-mode .about-highlight-green {
+  color: #047857 !important; /* Darker green for high contrast in light mode */
+}
+
+/* Lighter modal backdrop overlay under light mode */
+body.light-mode .modal-overlay {
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* =============================================
+   COMPASS TOOL COLOR
+============================================= */
+#tool-compass { --tool-color: #38bdf8; }
+
+/* =============================================
+   RULER & PROTRACTOR - FIXED DARK MODE STYLING
+   Ruler and protractor overlays should always look dark
+   so numbers remain readable and consistent.
+============================================= */
+#math-ruler-overlay,
+#math-protractor-overlay {
+  background: rgba(15, 23, 42, 0.88) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #f1f5f9 !important;
+}
+
+#math-ruler-overlay > div,
+#math-protractor-overlay > div {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Ensure no inversion filters are applied to the canvas in light mode */
+body.light-mode #math-ruler-overlay canvas,
+body.light-mode #protractor-ticks-canvas {
+  filter: none !important;
+}
+
+
+/* =============================================
+   TOOLBAR TOGGLE HIDDEN STATE
+============================================= */
+.floating-toolbar.toolbar-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(120%);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+.floating-toolbar {
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+#toolbar-show-btn {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  animation: pulseShowBtn 2s ease-in-out infinite;
+}
+
+@keyframes pulseShowBtn {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0,162,255,0); }
+  50%       { box-shadow: 0 0 0 8px rgba(0,162,255,0.15); }
+}
+
+body.light-mode #supporter-input-name {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  color: #121212 !important;
+}
+
+
